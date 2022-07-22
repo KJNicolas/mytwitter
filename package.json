@@ -1,0 +1,12 @@
+{
+  "name": "mytwitter",
+  "version": "1.0.0",
+  "description": "My own Version of twitter... cool clone",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "Nicolas Freedman Jr",
+  "license": "ISC"
+}
