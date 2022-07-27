@@ -4,6 +4,7 @@ const router = express.Router();
 const bodyParser = require("body-parser");
 const User = require("../../schemas/UserSchema");
 const Post = require("../../schemas/PostSchema");
+const Notification = require("../../schemas/NotificationSchema");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -14,6 +15,11 @@ router.get("/", async (req, res, next) => {
     var isReply = searchObj.isReply == "true";
     searchObj.replyTo = { $exists: isReply };
     delete searchObj.isReply;
+  }
+
+  if (searchObj.search !== undefined) {
+    searchObj.content = { $regex: searchObj.search, $options: "i" };
+    delete searchObj.search;
   }
 
   if (searchObj.followingOnly !== undefined) {
@@ -78,6 +84,16 @@ router.post("/", async (req, res, next) => {
   Post.create(postData)
     .then(async (newPost) => {
       newPost = await User.populate(newPost, { path: "postedBy" });
+      newPost = await Post.populate(newPost, { path: "replyTo" });
+
+      if (newPost.replyTo !== undefined) {
+        await Notification.insertNotification(
+          newPost.replyTo.postedBy,
+          req.session.user._id,
+          "reply",
+          newPost._id
+        );
+      }
 
       res.status(201).send(newPost);
     })
@@ -115,6 +131,15 @@ router.put("/:id/like", async (req, res, next) => {
     console.log(error);
     res.sendStatus(400);
   });
+
+  if (!isLiked) {
+    await Notification.insertNotification(
+      post.postedBy,
+      userId,
+      "postLike",
+      post._id
+    );
+  }
 
   res.status(200).send(post);
 });
@@ -165,12 +190,40 @@ router.post("/:id/retweet", async (req, res, next) => {
     res.sendStatus(400);
   });
 
+  if (!deletedPost) {
+    await Notification.insertNotification(
+      post.postedBy,
+      userId,
+      "retweet",
+      post._id
+    );
+  }
+
   res.status(200).send(post);
 });
 
 router.delete("/:id", (req, res, next) => {
   Post.findByIdAndDelete(req.params.id)
     .then(() => res.sendStatus(202))
+    .catch((error) => {
+      console.log(error);
+      res.sendStatus(400);
+    });
+});
+
+router.put("/:id", async (req, res, next) => {
+  if (req.body.pinned !== undefined) {
+    await Post.updateMany(
+      { postedBy: req.session.user },
+      { pinned: false }
+    ).catch((error) => {
+      console.log(error);
+      res.sendStatus(400);
+    });
+  }
+
+  Post.findByIdAndUpdate(req.params.id, req.body)
+    .then(() => res.sendStatus(204))
     .catch((error) => {
       console.log(error);
       res.sendStatus(400);
