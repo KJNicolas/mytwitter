@@ -1,10 +1,4 @@
-# mytwitter is a twitter clone web application made using Node-js Socket.io and MongoDB with a complete features of messages/group messages, follow/unfollow, comment/share/like/pin posts and also notifications with the ability to detect if an email has already been assigned to an account... so no one can signup using the same email twice...Currently working on adding some more features..if you would like to experience this app please go on
-
-
-
-
-
-
+Responsive and complete with Features such as Messages, Group Messages, Follow - unfollow, comment, share,  like and pin posts on time notifications and authentication with the ability to detect if an email has already been assigned to an account so no one can signup using the same email again.
 
 
 https://mytwitter-king.herokuapp.com
